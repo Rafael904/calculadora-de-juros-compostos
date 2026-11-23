@@ -40,6 +40,25 @@ button {
   cursor: pointer;
 }
 
+button.historico-item {
+  display: inline-block;
+  width: auto;
+  height: auto;
+  margin: 0;
+  padding: 4px 8px;
+  border: 0;
+  background: transparent;
+  font-size: 16px;
+  text-align: left;
+  font-size: 30px;
+}
+
+button.historico-item:hover,
+button.historico-item:focus-visible {
+  background-color: #e8f5e5;
+  text-decoration: underline;
+}
+
 input {
   width: 120px;
   font-size: 30px;

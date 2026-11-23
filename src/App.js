@@ -3,7 +3,7 @@ import useCalcular from './Componentes/calcular.js'; //Usado para calcular o val
 import Tabela from './Componentes/tabela.js'; //Usado para exibir a tabela de resultados
 import ConverJuros from './Componentes/converJuros.js'; //Usado para converter a taxa de juros
 import Historico from './Componentes/Historico.js'; //Usado para exibir o histórico de cálculos
-import { useContext, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { UserContext } from './VarContext/Context.js';
 
 function App() {
@@ -14,7 +14,24 @@ function App() {
 
   //Verifica se o resultado já foi calculado e armazena o valor final e o total investido.
   const [resultadoCalculado, setResultadoCalculado] = useState(null);
-  const [historico, setHistorico] = useState([]);
+  const [historico, setHistorico] = useState(() => {
+    try {
+      const salvo = window.localStorage.getItem('historico-calculadora');
+      const dados = salvo ? JSON.parse(salvo) : [];
+      return Array.isArray(dados) ? dados : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem('historico-calculadora', JSON.stringify(historico));
+    } catch {
+      // O histórico continua disponível durante a sessão se o armazenamento estiver indisponível.
+    }
+  }, [historico]);
+
   function resultado() {
     const total = calcular();
     const investido = inicial + mensal * periodo * 12;
@@ -22,15 +39,22 @@ function App() {
     setHistorico((atual) => [...atual, { inicial, mensal, juros, periodo }]);
   }
 
+  function selecionarHistorico(dados) {
+    setInicial(dados.inicial);
+    setMensal(dados.mensal);
+    setJuros(dados.juros);
+    setPeriodo(dados.periodo);
+  }
+
   const [tabela, setTabela] = useState(null);
 
   return (<>
     <section> {/*Seção principal da aplicação, (parte verde) */}
       <h1>Calculadora de juros compostos</h1>
-      <div className='inicial'>Valor inicial: <input value={inicial} type='number' onChange={(e) => setInicial(Number(e.target.value))}/>R$</div>
-      <div className="mensal">Investimento mensal: <input value={mensal} type='number' onChange={(e) => setMensal(Number(e.target.value))}/>R$</div>
-      <div className="juros">Taxa de juros (por mês): <input value={juros} type='number' onChange={(e) => setJuros(Number(e.target.value))}/>%</div>
-      <div className="periodo">Período: <input value={periodo} type='number' onChange={(e) => setPeriodo(parseInt(Number(e.target.value)))}/>anos</div>
+      <div className='inicial'>Valor inicial: <input value={inicial} type='number' onFocus={(e) => e.target.select()} onChange={(e) => setInicial(Number(e.target.value))}/>R$</div>
+      <div className="mensal">Investimento mensal: <input value={mensal} type='number' onFocus={(e) => e.target.select()} onChange={(e) => setMensal(Number(e.target.value))}/>R$</div>
+      <div className="juros">Taxa de juros (por mês): <input value={juros} type='number' onFocus={(e) => e.target.select()} onChange={(e) => setJuros(Number(e.target.value))}/>%</div>
+      <div className="periodo">Período: <input value={periodo} type='number' onFocus={(e) => e.target.select()} onChange={(e) => setPeriodo(parseInt(Number(e.target.value)))}/>anos</div>
     <br/><button onClick = {() => {resultado(); setTabela(true);}}>Calcular</button><br />
     
     <div>{resultadoCalculado ? <>
@@ -46,7 +70,11 @@ function App() {
     <div>{tabela ? <Tabela /> : <h3>Sua tabela aparecerá aqui</h3>}</div>
 
     <ConverJuros />
-    <Historico historico={historico} />
+    <Historico
+      historico={historico}
+      onSelecionar={selecionarHistorico}
+      onLimpar={() => setHistorico([])}
+    />
   <br/><br/></>);
 }
 
